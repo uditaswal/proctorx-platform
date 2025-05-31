@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
-import { executeCode } from '../../utils/api';
-import { languageIds } from '../../utils/languageIds';
+import { executeCode } from '@/utils/api';
+import { languageIds } from '@/utils/languageIds';
 
 interface Props {
-  token: string; // Supabase JWT
+  token: string;
 }
 
 const CodeEditor: React.FC<Props> = ({ token }) => {
@@ -28,10 +28,10 @@ const CodeEditor: React.FC<Props> = ({ token }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="bg-gray-800 p-4 rounded-xl shadow-lg space-y-4">
       <div className="flex items-center gap-4">
         <select
-          className="border p-2 rounded"
+          className="p-2 bg-gray-700 text-white rounded"
           value={language}
           onChange={(e) => {
             const lang = e.target.value;
@@ -45,8 +45,9 @@ const CodeEditor: React.FC<Props> = ({ token }) => {
             </option>
           ))}
         </select>
+
         <button
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           onClick={handleExecute}
           disabled={loading}
         >
@@ -63,7 +64,7 @@ const CodeEditor: React.FC<Props> = ({ token }) => {
       />
 
       <textarea
-        className="w-full p-2 border rounded"
+        className="w-full bg-gray-700 text-white p-3 rounded"
         rows={3}
         placeholder="Optional stdin input"
         value={stdin}
@@ -71,9 +72,9 @@ const CodeEditor: React.FC<Props> = ({ token }) => {
       />
 
       {output !== null && (
-        <div className="bg-gray-100 p-4 rounded border whitespace-pre-wrap">
-          <strong>Output:</strong>
-          <pre>{output}</pre>
+        <div className="bg-gray-900 p-4 rounded border border-gray-700 text-white whitespace-pre-wrap">
+          <strong className="text-green-400">Output:</strong>
+          <pre className="mt-2">{output}</pre>
         </div>
       )}
     </div>

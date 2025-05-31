@@ -1,6 +1,7 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import Navbar from '../components/Navbar'; // ✅ Import global navbar
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const supabase = createServerComponentClient({ cookies });
@@ -11,5 +12,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   if (!session) redirect('/login');
 
-  return <>{children}</>;
+  return (
+    <>
+      <Navbar />
+      <main className="p-4">{children}</main>
+    </>
+  );
 }

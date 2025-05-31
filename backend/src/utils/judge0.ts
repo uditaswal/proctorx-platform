@@ -15,7 +15,9 @@ export interface Judge0Result {
     id: number;
     description: string;
   };
+  language_id?: number;
 }
+
 // ✅ Type-safe return
 export const submitCode = async (
   source_code: string,
@@ -36,11 +38,19 @@ export const submitCode = async (
           'X-RapidAPI-Key': API_KEY,
           'X-RapidAPI-Host': API_HOST,
         },
-        timeout: 10000,
+        timeout: 15000, // ✅ slightly more generous timeout
       }
     );
 
-    return response.data as Judge0Result; // ✅ assert type
+    // ✅ Sanitize & fallback-safe
+    const data = response.data as Judge0Result;
+
+    return {
+      stdout: data.stdout || '',
+      stderr: data.stderr || data.compile_output || '',
+      status: data.status || { id: -1, description: 'Unknown' },
+      language_id: data.language_id || language_id,
+    };
   } catch (error: any) {
     console.error('[Judge0 Error]', error?.response?.data || error.message);
     throw new Error('Code execution failed via Judge0 API');

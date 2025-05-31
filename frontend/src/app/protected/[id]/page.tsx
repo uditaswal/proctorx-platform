@@ -2,46 +2,42 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import CodeEditor from '../../components/CodeEditor';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import CodeEditor from '../../components/CodeEditor';
 import WebcamCapture from '../../components/WebcamCapture';
 import TabMonitor from '../../components/TabMonitor';
 
 export default function ExamPage() {
-  const supabase = createClientComponentClient();
   const router = useRouter();
-  const { id } = useParams(); // exam ID from URL
-
+  const { id } = useParams();
+  const supabase = createClientComponentClient();
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session) {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
         router.push('/login');
         return;
       }
+
       setToken(data.session.access_token);
       setLoading(false);
     };
 
     fetchSession();
-  }, [supabase, router]);
+  }, [router, supabase]);
 
-  if (loading) return <div className="p-4">Loading exam...</div>;
-
-  if (!token) return <div className="p-4 text-red-600">Not authenticated</div>;
+  if (loading) return <div className="p-6 text-white">Loading exam...</div>;
+  if (!token) return <div className="p-6 text-red-600">Not authenticated</div>;
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Coding Exam - ID: {id}</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white">
+      <h1 className="text-2xl font-bold mb-4">🧪 Exam ID: {id}</h1>
 
-      {/* Proctoring Components */}
       <WebcamCapture token={token} />
       <TabMonitor token={token} />
-
-      {/* Exam Code Editor */}
       <CodeEditor token={token} />
     </div>
   );
