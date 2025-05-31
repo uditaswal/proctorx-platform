@@ -8,9 +8,12 @@ export const register: RequestHandler = async (req, res) => {
   if (error) {
     res.status(400).json({ error: error.message });
     return;
+    
   }
+console.log("Registered user:", data.user);
 
-  res.status(200).json({ message: 'User registered', data });
+  res.status(200).json({ message: `User registered /n Please click on confirmation link 
+    send on email`, data });
 };
 
 export const login: RequestHandler = async (req, res) => {
@@ -21,6 +24,7 @@ export const login: RequestHandler = async (req, res) => {
     res.status(401).json({ error: error.message });
     return;
   }
+console.log("Registered user:", data.user);
 
   res.status(200).json({ message: 'Login successful', data });
 };
