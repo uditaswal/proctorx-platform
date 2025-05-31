@@ -1,10 +1,11 @@
-// File: frontend/src/app/exam/[id]/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CodeEditor from '../../components/CodeEditor';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import WebcamCapture from '../../components/WebcamCapture';
+import TabMonitor from '../../components/TabMonitor';
 
 export default function ExamPage() {
   const supabase = createClientComponentClient();
@@ -14,7 +15,6 @@ export default function ExamPage() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch token on mount
   useEffect(() => {
     const fetchSession = async () => {
       const { data, error } = await supabase.auth.getSession();
@@ -37,8 +37,11 @@ export default function ExamPage() {
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Coding Exam - ID: {id}</h1>
 
-      {/* You can render MCQ or exam metadata here */}
+      {/* Proctoring Components */}
+      <WebcamCapture token={token} />
+      <TabMonitor token={token} />
 
+      {/* Exam Code Editor */}
       <CodeEditor token={token} />
     </div>
   );
