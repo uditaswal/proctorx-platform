@@ -1,70 +1,51 @@
 import express from 'express';
-import { Request, Response } from 'express';
+import asyncHandler from 'express-async-handler';
 import { verifyUser } from '../middleware/auth';
+import { submitAnswer } from '../controllers/submissionController';
 import supabase from '../utils/supabaseClient';
-import { submitCode, Judge0Result } from '../utils/judge0';
 
 const router = express.Router();
 
-router.post('/', verifyUser, async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { exam_id, question_id, answer, code, language_id } = req.body;
+// Submit answer
+router.post('/', verifyUser, submitAnswer);
+
+// Get user's submissions for an exam attempt
+router.get(
+  '/attempt/:attempt_id',
+  verifyUser,
+  asyncHandler(async (req, res) => {
+    const { attempt_id } = req.params;
     const user = (req as any).user;
 
-    // Fetch question info to determine type
-    const { data: question, error: questionError } = await supabase
-      .from('questions')
-      .select('type, correct_answer')
-      .eq('id', question_id)
+    // Verify attempt belongs to user
+    const { data: attempt } = await supabase
+      .from('exam_attempts')
+      .select('*')
+      .eq('id', attempt_id)
+      .eq('user_id', user.id)
       .single();
 
-    if (questionError || !question) {
-      res.status(404).json({ error: 'Question not found' });
+    if (!attempt) {
+      res.status(404).json({ error: 'Exam attempt not found' });
       return;
     }
 
-    let is_correct: boolean | null = null;
-    let output: string | null = null;
-    let stderr: string | null = null;
-    let status: string | null = null;
+    const { data: submissions, error } = await supabase
+      .from('submissions')
+      .select(`
+        *,
+        questions(question_text, type, points)
+      `)
+      .eq('exam_attempt_id', attempt_id)
+      .order('submitted_at');
 
-    if (question.type === 'mcq') {
-      is_correct = answer?.trim().toLowerCase() === question.correct_answer?.trim().toLowerCase();
-    }
-
-    if (question.type === 'code' && code && language_id) {
-      const result: Judge0Result = await submitCode(code, language_id);
-      output = result.stdout || '';
-      stderr = result.stderr || result.compile_output || '';
-      status = result.status?.description || 'Unknown';
-    }
-
-    const { error: insertError } = await supabase.from('submissions').insert([{
-      user_id: user.id,
-      exam_id,
-      question_id,
-      answer,
-      code,
-      language_id,
-      is_correct,
-      output,
-      stderr,
-      status,
-      submitted_at: new Date().toISOString()
-    }]);
-
-    if (insertError) {
-      res.status(400).json({ error: insertError.message });
+    if (error) {
+      res.status(500).json({ error: error.message });
       return;
     }
 
-    res.status(201).json({
-      message: 'Submission saved successfully',
-      result: { output, stderr, is_correct, status }
-    });
-  } catch (err) {
-    res.status(500).json({ error: (err as Error).message });
-  }
-});
+    res.json(submissions); // ✅ don't return this
+  })
+);
 
 export default router;
