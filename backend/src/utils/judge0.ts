@@ -11,9 +11,11 @@ export interface Judge0Result {
   stdout?: string;
   stderr?: string;
   compile_output?: string;
-  status: { id: number; description: string };
+  status: {
+    id: number;
+    description: string;
+  };
 }
-
 // ✅ Type-safe return
 export const submitCode = async (
   source_code: string,
