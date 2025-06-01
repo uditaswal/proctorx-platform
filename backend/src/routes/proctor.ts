@@ -1,16 +1,17 @@
 import express, { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler'; // ✅ new
-import { verifyUser } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import { recordViolation } from '../controllers/proctoringController';
 import supabase from '../utils/supabaseClient';
+import handler from './../../node_modules/uri-js/dist/esnext/schemes/http';
 
 const router = express.Router();
 
 // Record proctoring violation
-router.post('/violation', verifyUser, asyncHandler(recordViolation));
+router.post('/violation', authenticate, asyncHandler(recordViolation));
 
 // Save webcam snapshot
-router.post('/snapshot', verifyUser, asyncHandler(async (req: Request, res: Response) => {
+router.post('/snapshot', authenticate, asyncHandler(async (req: Request, res: Response) => {
   const { exam_attempt_id, image_base64 } = req.body;
   const user = (req as any).user;
 
@@ -66,7 +67,7 @@ router.post('/snapshot', verifyUser, asyncHandler(async (req: Request, res: Resp
 }));
 
 // Log activity
-router.post('/activity', verifyUser, asyncHandler(async (req: Request, res: Response) => {
+router.post('/activity', authenticate, asyncHandler(async (req: Request, res: Response) => {
   const { exam_attempt_id, activity_type, details } = req.body;
   const user = (req as any).user;
 
@@ -90,7 +91,7 @@ router.post('/activity', verifyUser, asyncHandler(async (req: Request, res: Resp
 }));
 
 // Get proctoring data for exam (admin only)
-router.get('/exam/:exam_id/data', verifyUser, asyncHandler(async (req: Request, res: Response) => {
+router.get('/exam/:exam_id/data', authenticate, asyncHandler(async (req: Request, res: Response) => {
   const { exam_id } = req.params;
   const user = (req as any).user;
 

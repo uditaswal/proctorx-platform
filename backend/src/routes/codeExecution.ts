@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { submitCode, Judge0Result } from '../utils/judge0';
-import { verifyUser } from '../middleware/auth';
-
+import { submitCode } from '../utils/judge0';
+import { authenticate } from '../middleware/auth';
+// 
 const router = Router();
 
-router.post('/', verifyUser, async (req: Request, res: Response): Promise<void> => {
+router.post('/', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { source_code, language_id, stdin = '' } = req.body;
 
@@ -13,7 +13,7 @@ router.post('/', verifyUser, async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const result: Judge0Result = await submitCode(source_code, language_id, stdin);
+    const result = await submitCode(source_code, language_id, stdin);
 
     res.status(200).json({
       stdout: result.stdout ?? '',
