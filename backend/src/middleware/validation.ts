@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
-
+import { z } from 'zod/v4'; // use `zod`, no need for `/v4` path
 
 // Validation schemas
 export const registerSchema = z.object({
@@ -43,7 +42,7 @@ export const createQuestionSchema = z.object({
 });
 
 // Generic validation middleware
-export const validate = (schema: z.ZodSchema) => {
+export const validate = (schema: z.ZodSchema<any>) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       schema.parse(req.body);
@@ -52,7 +51,7 @@ export const validate = (schema: z.ZodSchema) => {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Validation failed',
-          details: error.errors.map(err => ({
+          details: error.issues.map(err => ({
             field: err.path.join('.'),
             message: err.message
           }))
