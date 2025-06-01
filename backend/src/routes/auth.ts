@@ -1,29 +1,12 @@
-import express from 'express';
+import { Router } from 'express';
 import { register, login, logout } from '../controllers/authController';
-import { verifyUser } from '../middleware/auth';
-import supabase from '../utils/supabaseClient';
+import { registerSchema, loginSchema, createExamSchema,createQuestionSchema } from '../middleware/validation';
 
-const router = express.Router();
+const router = Router();
 
-router.post('/register', register);
-router.post('/login', login);
-router.post('/logout', verifyUser, logout);
-
-// Get current user profile
-router.get('/me', verifyUser, async (req, res) => {
-  try {
-    const user = (req as any).user;
-    
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    res.json({ user: { ...user, profile } });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+router.post('/register', registerValidation, validateRequest, register);
+router.post('/login', loginValidation, validateRequest, login);
+router.post('/logout', logout);
 
 export default router;
+

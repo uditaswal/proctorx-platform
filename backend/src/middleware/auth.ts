@@ -1,29 +1,61 @@
 import { Request, Response, NextFunction } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import supabase from '../utils/supabaseClient';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!);
+export interface AuthenticatedRequest extends Request {
+  user?: any;
+}
 
-export const verifyUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const authenticate = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-
-    if (!token) {
-      res.status(401).json({ message: 'Unauthorized: No token' });
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'No token provided' });
       return;
     }
+
+    const token = authHeader.substring(7);
 
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      res.status(403).json({ message: 'Invalid token' });
+      res.status(401).json({ error: 'Invalid or expired token' });
       return;
     }
 
-    // Attach user to request object for use in routes
-    (req as any).user = user;
-    next();
+    // Get user profile
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
 
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: (err as Error).message });
+    req.user = {
+      ...user,
+      profile
+    };
+
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(401).json({ error: 'Authentication failed' });
   }
 };
+
+export const requireRole = (roles: string[]) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+    if (!req.user?.profile?.role || !roles.includes(req.user.profile.role)) {
+      res.status(403).json({ error: 'Insufficient permissions' });
+      return;
+    }
+    next();
+  };
+};
+
+export const requireAdmin = requireRole(['admin']);
+export const requireInstructor = requireRole(['admin', 'instructor']);
+export const requireStudent = requireRole(['admin', 'instructor', 'student']);

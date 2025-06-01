@@ -1,16 +1,15 @@
-import cors from 'cors';
+import { CorsOptions } from 'cors';
 
-const corsOptions = {
-  origin: function (origin: any, callback: any) {
-    // Allow requests with no origin (mobile apps, etc.)
-    if (!origin) return callback(null, true);
-    
+export const corsOptions: CorsOptions = {
+  origin: function (origin, callback) {
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
-      'https://your-frontend-domain.com', // Replace with your actual domain
       process.env.FRONTEND_URL
     ].filter(Boolean);
+
+    // Allow requests with no origin (mobile apps, etc.)
+    if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -19,9 +18,6 @@ const corsOptions = {
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
-
-export default cors(corsOptions);
