@@ -7,11 +7,11 @@ import {
   getQuestionTemplates
 } from '../controllers/questionController';
 import { authenticate, requireInstructor } from '../middleware/auth';
-import { questionValidation, validateRequest } from '../middleware/validation';
+import {  validate } from '../middleware/validation';
 
 const router = Router();
 
-router.post('/', authenticate, requireInstructor, questionValidation, validateRequest, createQuestion);
+router.post('/', authenticate, requireInstructor, validate, createQuestion);
 router.get('/exam/:examId', authenticate, getExamQuestions);
 router.put('/:id', authenticate, requireInstructor, updateQuestion);
 router.delete('/:id', authenticate, requireInstructor, deleteQuestion);

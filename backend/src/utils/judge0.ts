@@ -3,6 +3,10 @@ import axios from 'axios';
 const JUDGE0_URL = process.env.JUDGE0_URL || 'https://judge0-ce.p.rapidapi.com';
 const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY;
 
+// ---------------------------
+// Interfaces & Constants
+// ---------------------------
+
 export interface CodeExecutionResult {
   stdout?: string;
   stderr?: string;
@@ -13,6 +17,10 @@ export interface CodeExecutionResult {
   };
   time?: string;
   memory?: number;
+}
+
+interface SubmissionResponse {
+  token: string;
 }
 
 export const LANGUAGE_IDS = {
@@ -27,14 +35,17 @@ export const LANGUAGE_IDS = {
   typescript: 74,
 };
 
+// ---------------------------
+// Submit Code Function
+// ---------------------------
+
 export const submitCode = async (
   code: string,
   languageId: number,
   input?: string
 ): Promise<CodeExecutionResult> => {
   try {
-    // Submit code for execution
-    const submissionResponse = await axios.post(
+    const submissionResponse = await axios.post<SubmissionResponse>(
       `${JUDGE0_URL}/submissions`,
       {
         source_code: Buffer.from(code).toString('base64'),
@@ -52,15 +63,14 @@ export const submitCode = async (
 
     const token = submissionResponse.data.token;
 
-    // Poll for result
-    let result;
+    let result: CodeExecutionResult | undefined;
     let attempts = 0;
     const maxAttempts = 20;
 
     do {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-      
-      const resultResponse = await axios.get(
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const resultResponse = await axios.get<CodeExecutionResult>(
         `${JUDGE0_URL}/submissions/${token}`,
         {
           headers: {
@@ -72,25 +82,34 @@ export const submitCode = async (
 
       result = resultResponse.data;
       attempts++;
-    } while (result.status?.id <= 2 && attempts < maxAttempts); // Status 1 = In Queue, 2 = Processing
 
-    // Decode base64 outputs
-    if (result.stdout) {
+      // Exit loop only if status and status.id are defined and status.id > 2
+      if (!result.status || typeof result.status.id !== 'number') {
+        break;
+      }
+    } while (result.status.id <= 2 && attempts < maxAttempts);
+
+    // Decode base64 outputs safely
+    if (result?.stdout) {
       result.stdout = Buffer.from(result.stdout, 'base64').toString();
     }
-    if (result.stderr) {
+    if (result?.stderr) {
       result.stderr = Buffer.from(result.stderr, 'base64').toString();
     }
-    if (result.compile_output) {
+    if (result?.compile_output) {
       result.compile_output = Buffer.from(result.compile_output, 'base64').toString();
     }
 
-    return result;
+    return result!;
   } catch (error) {
     console.error('Judge0 execution error:', error);
     throw new Error('Code execution failed');
   }
 };
+
+// ---------------------------
+// Get Languages Function
+// ---------------------------
 
 export const getLanguages = async () => {
   try {
@@ -106,4 +125,3 @@ export const getLanguages = async () => {
     return [];
   }
 };
-

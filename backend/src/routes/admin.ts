@@ -1,6 +1,6 @@
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
-import { verifyUser } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import supabase from '../utils/supabaseClient';
 
 // Async handler helper to wrap async functions and forward errors to Express error handler
@@ -33,7 +33,7 @@ const requireAdmin = asyncHandler(async (req: any, res: any, next: any) => {
 // Get dashboard stats
 router.get(
   '/dashboard',
-  verifyUser,
+  authenticate,
   requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const [
@@ -60,7 +60,7 @@ router.get(
 // Get all users
 router.get(
   '/users',
-  verifyUser,
+  authenticate,
   requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const { data: users, error } = await supabase
@@ -80,7 +80,7 @@ router.get(
 // Update user role
 router.put(
   '/users/:id/role',
-  verifyUser,
+  authenticate,
   requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
